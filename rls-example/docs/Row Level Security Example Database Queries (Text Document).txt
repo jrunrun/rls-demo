@@ -1,0 +1,257 @@
+-- Queries to Normalized Entitlement Tables
+
+SELECT * FROM theatres;
+
+SELECT * FROM regions;
+
+SELECT * FROM sub_regions;
+
+
+-- JOINing the Entitlement Tables to get a denormalized Entitlements View of all entitlements
+-- This is the view at the DEEPEST granularity
+
+SELECT 
+	t.theatre_id,
+	t.theatre_name,
+	r.region_id,
+	r.region_name,
+	s.sub_region_id,
+	s.sub_region_name
+FROM
+	theatres t
+INNER JOIN regions r ON t.theatre_id = r.theatre_id
+INNER JOIN sub_regions s ON r.region_id = s.region_id;
+
+-- Creating a "Synthetic Key" to give each entitlement row it's own unique ID
+-- Note: this could also be a randomly generated numeric ID
+-- We just use this text pattern based key for ease of understanding the examples
+
+SELECT 
+	t.theatre_id || '-' || r.region_id || '-' || s.sub_region_id AS entitlement_id, 
+	t.theatre_id,
+	t.theatre_name,
+	r.region_id,
+	r.region_name,
+	s.sub_region_id,
+	s.sub_region_name
+FROM
+	theatres t
+INNER JOIN regions r ON t.theatre_id = r.theatre_id
+INNER JOIN sub_regions s ON r.region_id = s.region_id;
+
+-- This query has been saved as a view:
+SELECT * FROM deepest_entitlements_view;
+
+
+-- To create a Sparse Entitlements view of all possible entitlements,
+-- a more complex query with UNIONs is involved:
+
+ SELECT 'ALL'::text AS entitlement_id,
+    NULL::text AS theatre_id,
+    NULL::text AS region_id,
+    NULL::text AS sub_region_id
+UNION ALL
+ SELECT theatres.theatre_id AS entitlement_id,
+    theatres.theatre_id,
+    NULL::text AS region_id,
+    NULL::text AS sub_region_id
+   FROM theatres
+UNION ALL
+ SELECT (regions.theatre_id || '-'::text) || regions.region_id AS entitlement_id,
+    regions.theatre_id,
+    regions.region_id,
+    NULL::text AS sub_region_id
+   FROM regions
+UNION ALL
+ SELECT (((r.theatre_id || '-'::text) || s.region_id) || '-'::text) || s.sub_region_id AS entitlement_id,
+    r.theatre_id,
+    s.region_id,
+    s.sub_region_id
+   FROM sub_regions s
+     JOIN regions r ON s.region_id = r.region_id;
+
+-- This query has been save as a view:
+SELECT * FROM sparse_entitlements_view;
+
+
+-- Roles table and the Roles-to-Entitlements mapping
+
+SELECT * FROM roles;
+
+SELECT * FROM roles_to_deepest_entitlements;
+SELECT * FROM roles_to_sparse_entitlements;
+
+-- A few roles exist in the "roles" tables of the example.
+-- You can define more roles by INSERTING rows:
+
+INSERT INTO (role_id, role_name) VALUES
+('SRD-USCA', 'Sub-Regional Director, USCA'),
+('SRD-LAC', 'Sub-Regional Director, Latin America and Caribbean'),
+('SRD-EMEA', 'Sub-Regional Director, EMEA'),
+('SRD-APAC, 'Sub-Regional Director, APAC')
+
+-- To assign entitlements to a Roles, add rows to the Roles-to-Entitlements tables
+
+-- Sparse Entitlements only requires a row for a given level in the hierarchy
+-- There are a few pre-defined, but you can add your own levels
+
+INSERT INTO roles_to_sparse_entitlements (role_id, entitlement_id) VALUES
+('SRD-USCA', 'AMER-USCA'),
+('SRD-LAC', 'AMER-LAC'),
+('SRD-EMEA', 'EMEA-EMEA'),
+('SRD-APAC', 'APAC-APAC')
+
+--  ^^ Note that these are one-to-one , but a role could have multiple entitlements
+-- even in a Sparse Entitlements view. 
+
+
+-- Deepest Granularity requires adding all rows for each row. 
+
+INSERT INTO roles_to_deepest_entitlements (role_id, entitlement_id) VALUES
+('SRD-LAC', 'MX'),
+('SRD-LAC', 'BR'),
+('SRD-LAC', 'RoLAC')
+
+-- This type of assignment can be made automatic using a clever query:
+
+-- Query to select all entitlements based on rules, and insert that into the map for any number of users
+-- This example gets any entitlement with region_id = 'APAC' and gives them to 'ttu' and 'mkannan'
+
+INSERT INTO roles_to_deepest_entitlements 
+SELECT 
+	r."role_id",
+	e.entitlement_id 
+FROM deepest_entitlements_view e
+JOIN 
+(
+	SELECT role_id FROM roles
+	-- Set your own rules here, this is just a list you define
+	WHERE role_id IN 
+		('SRD-LAC')
+	
+) r ON 1=1
+-- Set your own rules here for which entitlements to assign for that role(s)
+WHERE e.sub_region_id = 'LAC'
+;
+
+
+-- Users and Users to Role Map
+SELECT * FROM users; -- We use the usernames here in the mapping table
+
+SELECT * FROM users_to_roles; 
+
+-- Insert users into the "users" table
+-- The usernames MUST exist in the "users" table because there is a Foreign-Key relationship
+-- between the "users_to_roles" map table 
+INSERT INTO users (username, full_name)
+VALUES 
+('bhowell', 'Bryant Howell'),
+('rdugger, 'Ron Dugger'),
+('mosterheld', 'Miranda Osterheld'),
+('fgunning', 'Fearghal Gunning')
+
+
+-- Now you can assign a user to one or many roles
+
+INSERT INTO users_to_roles (username, role_id) VALUES 
+('rdugger', 'SRD-EMEA’),
+(‘rdugger’, 'SRD-APAC’);
+
+
+-- Updating a Row in the Role Map
+
+UPDATE users_to_roles 
+SET role_id='CEO' 
+WHERE username='bhowell' 
+AND role_id='GD;
+	
+	
+-- Deleting a Row in the Role Map
+
+DELETE FROM users_to_roles
+WHERE username='bhowell'
+AND role_id='CEO';
+
+
+
+-- Now we want to bring EVERYTHING together into a single table/view
+-- These are the full  "Entitlements View" in the RLS documentation
+
+-- Deepest Granularity
+SELECT * FROM 
+	(SELECT 
+		t.theatre_id,
+		t.theatre_name,
+		r.region_id,
+		r.region_name,
+		s.sub_region_id,
+		s.sub_region_name,
+		t.theatre_id || '-' || r.region_id || '-' || s.sub_region_id AS entitlement_id
+	FROM
+		theatres t
+	JOIN regions r ON t.theatre_id = r.theatre_id
+	JOIN sub_regions s ON r.region_id = s.region_id) a
+INNER JOIN roles_to_deepest_entitlements re ON re.entitlement_id = a.entitlement_id
+INNER JOIN users_to_roles ur ON ur.role_id = re.role_id;
+
+-- ^^ This is stored as a View:
+SELECT * FROM deepest_entitlements_users_roles_view;
+
+-- Sparse Entitlements
+SELECT * FROM sparse_entitlements_view a
+INNER JOIN roles_to_sparse_entitlements re ON re.entitlement_id = a.entitlement_id
+INNER JOIN users_to_roles ur ON ur.role_id = re.role_id;
+
+-- ^^ This is stored as a View:
+SELECT * FROM sparse_entitlements_users_roles_view;
+
+
+-- There also exist two direct mapping tables
+
+SELECT * FROM users_to_deepest_entitlements_map;
+
+SELECT * FROM users_to_sparse_entitlements_map;
+
+-- Tables in database that are Global Superstore Star Schema
+
+SELECT * FROM fact_orders;
+
+SELECT * FROM dim_customer;
+
+SELECT * FROM dim_customer_region;
+
+SELECT * FROM dim_date;
+
+SELECT * FROM dim_order;
+
+SELECT * FROM dim_product;
+
+
+-- View that brings all of the Global Superstore Star Schema together
+
+SELECT * from superstore_global_view;
+
+
+-- Function that answers back security entitlements
+-- Arguments are entitlement_part, username
+
+SELECT security_role('sub_region_name', 'bhowell');
+
+
+-- RAWSQL examples (these go in Tableau Calculated Field)
+
+RAWSQL_BOOL(
+'region_id IN (
+SELECT region_id 
+FROM deepest_entitlements_users_roles_view
+WHERE username = %1) ',
+  [Username Test Param] 
+)
+
+
+RAWSQL_BOOL(
+"region_id IN (
+SELECT security_role('region_id', %1))
+",
+  [Username Test Param] 
+)
