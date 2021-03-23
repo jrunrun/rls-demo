@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  postgres:
+    # image: "postgres:10"
+    build: .
+    restart: always
+    container_name: rls-demo-good-123
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourPassword
+    volumes:
+      - './postgres/data:/var/lib/postgresql/data'
+    ports:
+      - 5432:5432
