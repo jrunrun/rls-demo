@@ -1,15 +1,22 @@
 version: "3.7"
-
 services:
-  postgres:
-    # image: "postgres:10"
-    build: .
+  db:
+    container_name: rls-demo
+    image: postgres:10
+    # build: .
     restart: always
-    container_name: rls-demo-good-123
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: yourPassword
+    # secrets:
+    #   - db-password
     volumes:
+      # - db-data:/var/lib/postgresql/data
+      - ./db-bkp:/docker-entrypoint-initdb.d/
       - './postgres/data:/var/lib/postgresql/data'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=yourPassword
+      # - POSTGRES_DB=example
+      # - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
     ports:
       - 5432:5432
+# volumes:
+#   db-data: ./
