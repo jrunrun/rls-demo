@@ -8,6 +8,9 @@ This repository contains a Docker setup for a PostgreSQL database demonstration,
 
 1. **Prerequisites**
    - Ensure Docker and Docker Compose are installed on your system.
+   - Download DBeaver Community Edition from [here](https://dbeaver.io/download/) to explore the database.
+   - Download pgAdmin from [here](https://www.pgadmin.org/download/) to explore the database.
+   - Download Tableau from [here](https://www.tableau.com/products/desktop/download) to view the dashboards.
 
 2. **Setup**
    - Clone this repository to your local machine.
@@ -41,3 +44,9 @@ This repository contains a Docker setup for a PostgreSQL database demonstration,
      ```
      docker-compose down
      ```
+
+9. **View Dashboards**
+   - Open the Tableau workbook in the `workbook` directory to view the dashboards filtered by RLS.
+
+10. **Additional Documentation**
+    - Read the RLS slide deck and whitepaper in the `docs` directory for more detailed information about the project.
