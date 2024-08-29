@@ -1,4 +1,36 @@
-# rls-demo
+# PostgreSQL RLS Demo
+
+## Overview
+
+This repository contains a Docker setup for a PostgreSQL database demonstration, focusing on Row-Level Security (RLS). It uses PostgreSQL 10 and sets up a containerized environment for easy development and testing.
+
+## Steps
+
+1. **Prerequisites**
+   - Ensure Docker and Docker Compose are installed on your system.
+
+2. **Setup**
+   - Clone this repository to your local machine.
+   - Navigate to the project directory.
+
+3. **Configuration**
+   - Review the `docker-compose.yml` file.
+   - Modify the `POSTGRES_PASSWORD` in the environment section if needed.
+
+4. **Start the Database**
+   - Run the following command to start the PostgreSQL container:
+     ```
+     docker-compose up -d
+     ```
+
+5. **Access the Database**
+   - The PostgreSQL server will be accessible on localhost:5432
+   - Use the following credentials:
+     - Username: postgres
+     - Password: yourPassword (or the password you set)
+
+6. **Database Initialization**
+   - Any SQL files placed in the `./db-bkp` directory will be automatically executed when the container starts.
 
 7. **Data Persistence**
    - PostgreSQL data is persisted in the `./postgres/data` directory.
