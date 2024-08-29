@@ -1,1 +1,5 @@
-.DS_Store
+# Ignore .DS_Store files anywhere in the repository
+**/.DS_Store
+
+# Ignore postgres directory
+postgres/
