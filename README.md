@@ -7,7 +7,7 @@ This repository contains a Docker setup for a PostgreSQL database demonstration,
 ## Steps
 
 1. **Prerequisites**
-   - Ensure Docker and Docker Compose are installed on your system.
+   - Ensure Docker Desktop is installed from [here](https://www.docker.com/products/docker-desktop/). This includes Docker Engine, Docker CLI and Docker Compose.
    - Download DBeaver Community Edition from [here](https://dbeaver.io/download/) to explore the database.
    - Download pgAdmin from [here](https://www.pgadmin.org/download/) to explore the database.
    - Download Tableau from [here](https://www.tableau.com/products/desktop/download) to view the dashboards.
