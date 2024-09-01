@@ -29,8 +29,8 @@ This repository contains a Docker setup for a PostgreSQL database demonstration,
 5. **Access the Database**
    - The PostgreSQL server will be accessible on localhost:5432
    - Use the following credentials:
-     - Username: postgres
-     - Password: yourPassword (or the password you set)
+     - Username: 'postgres' (you can change this in the docker-compose.yml file)
+     - Password: 'yourPassword' (you can change this in the docker-compose.yml file)
 
 6. **Database Initialization**
    - Any SQL files placed in the `./db-bkp` directory will be automatically executed when the container starts.
@@ -47,6 +47,7 @@ This repository contains a Docker setup for a PostgreSQL database demonstration,
 
 9. **View Dashboards**
    - Open the Tableau workbook in the `workbook` directory to view the dashboards filtered by RLS.
+   - Toggle the parameters to change the user viewing the dashboard to see the different data, which is filtered by the RLS policy.
 
 10. **Additional Documentation**
     - Read the RLS slide deck and whitepaper in the `docs` directory for more detailed information about the project.
